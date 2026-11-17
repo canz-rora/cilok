@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keuangan Jualan Cilok</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #f3f4f6;
+    color: #222;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+}
+
+.header {
+    background: #ff8c42;
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 18px;
+    box-shadow: 0 3px 10px #00000010;
+}
+
+.total {
+    font-size: 30px;
+    font-weight: bold;
+    color: #16a34a;
+}
+
+input {
+    width: 100%;
+    padding: 13px;
+    margin: 7px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+button {
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.add {
+    width: 100%;
+    background: #ff8c42;
+    color: white;
+    font-size: 16px;
+    margin-top: 8px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    font-size: 13px;
+}
+
+th, td {
+    padding: 11px 5px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+th { background: #fff3e8; }
+
+.delete {
+    background: #fee2e2;
+    color: red;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+    <h2>🌶️ Keuangan Jualan Cilok</h2>
+    <p>Catatan pemasukan dan keuntungan</p>
+</div>
+
+<div class="card">
+    <h3>💰 Total Profit</h3>
+    <div class="total" id="total">Rp0</div>
+    <p>Akumulasi seluruh pemasukan</p>
+</div>
+
+<div class="card">
+    <h3>➕ Tambah Pemasukan</h3>
+
+    <input type="date" id="tanggal">
+
+    <input type="text" id="keterangan"
+    placeholder="Keterangan (contoh: Jualan pagi)">
+
+    <input type="text" id="profit"
+    placeholder="Profit (contoh: 5k atau 5000)">
+
+    <button class="add" onclick="tambah()">
+        + Tambahkan Profit
+    </button>
+</div>
+
+<div class="card">
+    <h3>📊 Riwayat Pemasukan</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tanggal</th>
+                <th>Keterangan</th>
+                <th>Profit</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody id="riwayat"></tbody>
+    </table>
+
+    <p id="kosong" style="text-align:center;color:#999">
+        Belum ada transaksi.
+    </p>
+</div>
+
+</div>
+
+<script>
+
+let data = JSON.parse(localStorage.getItem("cilokData")) || [];
+
+function rupiah(angka) {
+    return "Rp" + angka.toLocaleString("id-ID");
+}
+
+function formatAngka(teks) {
+    teks = teks.toLowerCase().replace(/\s/g, "");
+
+    let angka;
+
+    if (teks.endsWith("jt")) {
+        angka = parseFloat(teks) * 1000000;
+    } else if (teks.endsWith("k")) {
+        angka = parseFloat(teks) * 1000;
+    } else {
+        angka = parseFloat(teks.replace(/[^0-9.]/g, ""));
+    }
+
+    return isNaN(angka) ? 0 : Math.round(angka);
+}
+
+function tambah() {
+
+    let tanggal = document.getElementById("tanggal").value;
+    let keterangan = document.getElementById("keterangan").value;
+    let profit = formatAngka(
+        document.getElementById("profit").value
+    );
+
+    if (!tanggal || profit <= 0) {
+        alert("Isi tanggal dan profit dengan benar!");
+        return;
+    }
+
+    data.push({
+        tanggal: tanggal,
+        keterangan: keterangan || "Penjualan Cilok",
+        profit: profit
+    });
+
+    simpan();
+
+    document.getElementById("keterangan").value = "";
+    document.getElementById("profit").value = "";
+}
+
+function hapus(index) {
+    if (confirm("Hapus transaksi ini?")) {
+        data.splice(index, 1);
+        simpan();
+    }
+}
+
+function simpan() {
+    localStorage.setItem("cilokData", JSON.stringify(data));
+    tampilkan();
+}
+
+function tampilkan() {
+
+    let tabel = document.getElementById("riwayat");
+    let total = 0;
+
+    tabel.innerHTML = "";
+
+    data.forEach((item, index) => {
+
+        total += item.profit;
+
+        tabel.innerHTML += `
+        <tr>
+            <td>${item.tanggal}</td>
+            <td>${item.keterangan}</td>
+            <td>${rupiah(item.profit)}</td>
+            <td>
+                <button class="delete"
+                onclick="hapus(${index})">X</button>
+            </td>
+        </tr>
+        `;
+    });
+
+    document.getElementById("total").innerText = rupiah(total);
+
+    document.getElementById("kosong").style.display =
+        data.length ? "none" : "block";
+}
+
+document.getElementById("tanggal").value =
+    new Date().toLocaleDateString("en-CA");
+
+tampilkan();
+
+</script>
+
+</body>
+</html>
